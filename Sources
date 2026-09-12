@@ -1,0 +1,38 @@
+Yep — here’s the **full source list from above in one place**, grouped so you can bookmark it.  
+## 🧠 Agent architecture  
+1. **Anthropic — Building Effective Agents** Workflows, routing, parallelization, orchestrator/worker, evaluator-optimizer, multi-agent systems. ++[Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents?utm_source=chatgpt.com)++  
+2. **OpenAI — A Practical Guide to Building Agents** Agent design, orchestration, tools, guardrails, human intervention. ++[Practical Guide to Building Agents](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/?utm_source=chatgpt.com)++  
+3. **LangGraph — Documentation** State, graphs, persistence, workflows and agent orchestration. ++[LangGraph Documentation](https://docs.langchain.com/oss/python/langgraph/overview?utm_source=chatgpt.com)++  
+  
+## 🔧 Tools / tool calling  
+4. **Anthropic — Writing Effective Tools for Agents** How to design tool schemas, descriptions, errors and tool interfaces. ++[Writing Effective Tools for Agents](https://www.anthropic.com/engineering/writing-tools-for-agents?utm_source=chatgpt.com)++  
+5. **Model Context Protocol (MCP)** Standard for connecting AI systems to tools and external data. ++[MCP Documentation](https://modelcontextprotocol.io/?utm_source=chatgpt.com)++  
+6. **OpenAI — Function Calling** Structured tool/function calling and agent-tool interaction. ++[OpenAI Function Calling Documentation](https://platform.openai.com/docs/guides/function-calling?utm_source=chatgpt.com)++  
+  
+## 📊 Evaluation & reliability  
+7. **LangChain — Agent Evals** Evaluating final answers, trajectories, traces and agent behavior. ++[Agent Evals](https://www.langchain.com/resources/agent-evals?utm_source=chatgpt.com)++  
+8. **LangChain — Agent Observability & Evaluation** Using traces/observability to identify and diagnose failures. ++[Agent Observability Powers Agent Evaluation](https://www.langchain.com/blog/agent-observability-powers-agent-evaluation?utm_source=chatgpt.com)++  
+9. **Anthropic — Demystifying Evals for AI Agents** How to build meaningful evaluations instead of simply checking whether an answer looks correct. ++[Demystifying Evals for AI Agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents?utm_source=chatgpt.com)++  
+10. **ReliabilityBench — Agent Reliability** Repeated execution, perturbations, tool/API failures and reliability testing. ++[ReliabilityBench Paper](https://arxiv.org/abs/2601.06112?utm_source=chatgpt.com)++  
+11. **Agent Evaluation Survey / Review** Broad overview of modern agent benchmarks and evaluation approaches. ++[Agent Evaluation Review](https://link.springer.com/article/10.1007/s10462-026-11571-0?utm_source=chatgpt.com)++  
+  
+## 📚 Important agent research papers  
+12. **ReAct — Reasoning + Acting** One of the foundational papers for tool-using agents. ++[ReAct Paper](https://arxiv.org/abs/2210.03629?utm_source=chatgpt.com)++  
+13. **Reflexion** Agents use feedback from previous attempts to improve subsequent attempts. ++[Reflexion Paper](https://arxiv.org/abs/2303.11366?utm_source=chatgpt.com)++  
+14. **Toolformer** Research into models learning to use external tools. ++[Toolformer Paper](https://arxiv.org/abs/2302.04761?utm_source=chatgpt.com)++  
+15. **Tree of Thoughts** Exploring multiple reasoning paths rather than a single path. ++[Tree of Thoughts Paper](https://arxiv.org/abs/2305.10601?utm_source=chatgpt.com)++  
+  
+## 🏆 Agent benchmarks  
+16. **AgentBench** General benchmark for evaluating LLM agents across environments. ++[AgentBench](https://arxiv.org/abs/2308.03688?utm_source=chatgpt.com)++  
+17. **WebArena** Benchmark for agents interacting with realistic websites. ++[WebArena](https://arxiv.org/abs/2307.13854?utm_source=chatgpt.com)++  
+18. **GAIA** General AI assistant benchmark involving reasoning, tools and real-world tasks. ++[GAIA Benchmark](https://arxiv.org/abs/2311.12983?utm_source=chatgpt.com)++  
+19. **SWE-bench** Evaluates agents on real-world software engineering problems. ++[SWE-bench](https://www.swebench.com/?utm_source=chatgpt.com)++  
+20. **BrowserGym** Environment for evaluating browser-interacting agents. ++[BrowserGym Paper](https://arxiv.org/abs/2403.07304?utm_source=chatgpt.com)++  
+  
+## ⭐ If you only have tonight  
+Don't read all 20.  
+I'd do these **in this exact order**:  
+**1.** Anthropic — Building Effective Agents **2.** OpenAI — Practical Guide to Building Agents **3.** Anthropic — Writing Effective Tools **4.** Anthropic — Demystifying Evals **5.** LangChain — Agent Evals **6.** ReliabilityBench **7.** ReAct **8.** Reflexion  
+Then use the benchmarks to get ideas for **how to test your own system**, rather than trying to implement the benchmarks themselves.  
+For your hackathon, the biggest takeaway to keep in your head is:  
+**Don't make the agent look complicated. Make it measurable, recoverable, observable, and demonstrably better.**  
