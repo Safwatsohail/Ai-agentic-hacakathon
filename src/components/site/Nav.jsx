@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Github, ArrowUpRight } from "lucide-react";
-import { NAV_ITEMS } from "@/data/mock";
+import { AGENT_NAME, NAV_ITEMS } from "@/data/mock";
 import { cn } from "@/lib/utils";
 
 export default function Nav() {
@@ -36,7 +36,10 @@ export default function Nav() {
           data-testid="nav-logo"
           className="flex items-center gap-2.5 group"
         >
-          <img src="/logo.png" alt="Orchestr" className="h-6 w-auto object-contain" onError={(e) => e.target.style.display='none'} />
+          <img src="/logo.png" alt="Orchestr Logo" className="h-8 w-auto object-contain" onError={(e) => e.target.style.display='none'} />
+          <span className="text-[15px] tracking-[-0.01em] font-medium text-white">
+            {AGENT_NAME}
+          </span>
           <span className="hidden sm:inline text-[11px] font-mono text-white/40 tracking-widest">
             v0.9.2
           </span>

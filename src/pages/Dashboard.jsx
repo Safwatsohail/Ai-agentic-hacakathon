@@ -58,7 +58,8 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside className="hidden md:flex w-[240px] shrink-0 border-r border-white/[0.06] bg-[#07070a] flex-col">
         <Link to="/" className="flex items-center gap-2 px-5 h-16 border-b border-white/[0.06] group">
-          <img src="/logo.png" alt="Orchestr" className="h-5 w-auto object-contain" onError={(e) => e.target.style.display='none'} />
+          <img src="/logo.png" alt="Orchestr Logo" className="h-8 w-auto object-contain" onError={(e) => e.target.style.display='none'} />
+          <span className="text-white font-medium tracking-tight">Orchestr</span>
           <span className="ml-auto font-mono text-[10px] text-white/40">v1.0.0</span>
         </Link>
 
