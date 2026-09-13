@@ -42,7 +42,7 @@ export default function Testing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.06 }}
-              className="p-5 rounded-xl border border-white/[0.08] bg-[#0a0a0c]"
+              className="p-6 rounded-xl border border-white/[0.08] bg-[#0a0a0c]"
               data-testid={`benchmark-${b.label.toLowerCase().replace(/\s+/g, "-")}`}
             >
               <div className="font-mono text-[10px] tracking-widest uppercase text-white/40">
@@ -72,7 +72,7 @@ export default function Testing() {
           viewport={{ once: true }}
           className="rounded-2xl border border-white/[0.08] bg-[#08080a] overflow-hidden"
         >
-          <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06]">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
             <div className="font-mono text-[11px] tracking-widest uppercase text-white/50">
               test suite · nexus-agent
             </div>
@@ -88,7 +88,7 @@ export default function Testing() {
           </div>
 
           <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
-            <div className="p-5">
+            <div className="p-6 md:p-8">
               <div className="space-y-2">
                 {TEST_SUITE.map((t, i) => {
                   const result = results.find((r) => r.id === t.id);
@@ -97,7 +97,7 @@ export default function Testing() {
                     <div
                       key={t.id}
                       className={cn(
-                        "flex items-center justify-between px-3 py-2.5 rounded-md border transition-all font-mono text-[12px]",
+                        "flex items-center justify-between px-4 py-3 rounded-md border transition-all font-mono text-[12px]",
                         result
                           ? "border-emerald-400/25 bg-emerald-400/[0.03] text-white"
                           : active
@@ -124,8 +124,8 @@ export default function Testing() {
             </div>
 
             {/* console */}
-            <div className="p-5 min-h-[280px] font-mono text-[12px]">
-              <div className="text-[10px] uppercase tracking-widest text-white/40 mb-3">
+            <div className="p-6 md:p-8 min-h-[280px] font-mono text-[12px]">
+              <div className="text-[10px] uppercase tracking-widest text-white/40 mb-4">
                 console
               </div>
               <AnimatePresence initial={false}>

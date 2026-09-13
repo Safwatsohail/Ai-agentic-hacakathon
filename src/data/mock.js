@@ -1,6 +1,6 @@
 // Central mock data for the platform. Frontend-only, no backend.
 
-export const AGENT_NAME = "NEXUS";
+export const AGENT_NAME = "Vernex";
 
 export const NAV_ITEMS = [
   { label: "Product", href: "#product" },
@@ -8,27 +8,22 @@ export const NAV_ITEMS = [
   { label: "Reliability", href: "#reliability" },
   { label: "Integrations", href: "#integrations" },
   { label: "Tests", href: "#tests" },
-  { label: "Team", href: "#team" },
 ];
 
 export const SUGGESTED_TASKS = [
-  "Research this company and summarize its competitors",
-  "Analyze this dataset and surface key anomalies",
-  "Find relevant information across my connected apps",
-  "Create a research report on GPU inference economics",
-  "Determine the best approach to reduce agent latency",
+  "@Orchestr handle this production incident",
+  "@Orchestr summarize the recent #incidents",
+  "@Orchestr schedule an incident review",
 ];
 
-// The 8 canonical stages the simulated agent walks through
+// The 6 canonical stages of the Orchestr Happy Path
 export const EXECUTION_STAGES = [
-  { id: "understand", label: "Understand task", detail: "Parse objective & constraints", ms: 320 },
-  { id: "plan", label: "Plan", detail: "Draft execution strategy", ms: 480 },
-  { id: "reason", label: "Reason", detail: "Chain of thought evaluation", ms: 640 },
-  { id: "search", label: "Search", detail: "Web + connected sources", ms: 820 },
-  { id: "tools", label: "Invoke tools", detail: "Route to specialized capabilities", ms: 720 },
-  { id: "memory", label: "Recall memory", detail: "Retrieve prior context", ms: 380 },
-  { id: "validate", label: "Validate", detail: "Verify output against constraints", ms: 540 },
-  { id: "respond", label: "Respond", detail: "Compose final answer", ms: 460 },
+  { id: "discord", label: "Investigate Discord", detail: "Read context in #incidents", ms: 420 },
+  { id: "github_search", label: "Investigate GitHub", detail: "Search target repo commits", ms: 680 },
+  { id: "plan", label: "Reason & Plan", detail: "Identify bug in diff", ms: 540 },
+  { id: "github_pr", label: "Act: GitHub", detail: "Create PR with code fix", ms: 820 },
+  { id: "calendar", label: "Act: Calendar", detail: "Schedule 'Incident Review'", ms: 450 },
+  { id: "discord_report", label: "Report: Discord", detail: "Post PR & meeting link", ms: 380 },
 ];
 
 export const INTEGRATIONS = [
@@ -70,10 +65,10 @@ export const RELIABILITY_PILLARS = [
 ];
 
 export const HOW_STEPS = [
-  { n: "01", title: "Understand", body: "The agent interprets the objective and its constraints." },
-  { n: "02", title: "Plan", body: "It determines the optimal execution strategy." },
-  { n: "03", title: "Orchestrate", body: "It selects and coordinates specialized capabilities." },
-  { n: "04", title: "Validate", body: "It evaluates the result before returning it." },
+  { n: "01", title: "Investigate", body: "The agent reads context from Discord and GitHub." },
+  { n: "02", title: "Plan", body: "It identifies the root cause and drafts a strategy." },
+  { n: "03", title: "Act", body: "It pushes a PR and schedules follow-ups autonomously." },
+  { n: "04", title: "Report", body: "It verifies actions and loops you back in on Discord." },
 ];
 
 export const TEST_SUITE = [

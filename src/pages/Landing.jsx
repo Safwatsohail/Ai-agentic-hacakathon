@@ -6,7 +6,6 @@ import Reliability from "@/components/site/Reliability";
 import Integrations from "@/components/site/Integrations";
 import Testing from "@/components/site/Testing";
 import Architecture from "@/components/site/Architecture";
-import Team from "@/components/site/Team";
 import Story from "@/components/site/Story";
 import FinalCTA from "@/components/site/FinalCTA";
 import Footer from "@/components/site/Footer";
@@ -23,7 +22,6 @@ export default function Landing() {
       <Testing />
       <Architecture />
       <Story />
-      <Team />
       <FinalCTA />
       <Footer />
     </main>

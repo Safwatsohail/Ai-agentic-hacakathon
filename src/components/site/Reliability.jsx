@@ -47,58 +47,24 @@ export default function Reliability() {
             })}
           </div>
 
-          {/* Right: editorial screenshot placeholder */}
+          {/* Right: editorial minimal visual */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="lg:col-span-6 relative rounded-2xl border border-white/[0.08] overflow-hidden min-h-[420px] bg-[#08080a]"
+            className="lg:col-span-6 relative rounded-2xl border border-white/[0.08] overflow-hidden min-h-[420px] bg-[#08080a] flex items-center justify-center"
           >
             <div className="absolute inset-0 bg-grid-fine opacity-70 radial-fade" />
-
-            {/* Fake dashboard preview */}
-            <div className="relative p-6 h-full flex flex-col">
-              <div className="flex items-center justify-between font-mono text-[10px] tracking-widest uppercase text-white/40">
-                <span>[ reliability dashboard ]</span>
-                <span>live · preview</span>
+            
+            <div className="relative flex flex-col items-center justify-center p-8 text-center space-y-4">
+              <div className="h-16 w-16 rounded-full border border-white/10 bg-white/[0.03] grid place-items-center mb-2">
+                <Radar className="h-6 w-6 text-white/40" />
               </div>
-
-              <div className="mt-6 grid grid-cols-3 gap-3">
-                {[
-                  { l: "Uptime", v: "99.98%" },
-                  { l: "Recovery", v: "0.42 s" },
-                  { l: "Validated", v: "97.1%" },
-                ].map((m) => (
-                  <div key={m.l} className="p-3 rounded-lg border border-white/[0.08] bg-black/40">
-                    <div className="font-mono text-[10px] text-white/40 uppercase tracking-widest">
-                      {m.l}
-                    </div>
-                    <div className="mt-1 text-lg text-white font-mono">{m.v}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5 flex-1 rounded-lg border border-white/[0.08] bg-black/40 p-4">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-white/40 mb-3">
-                  Execution trace · run 82f4c1
-                </div>
-                <div className="space-y-2 font-mono text-[11px]">
-                  {["understand", "plan", "search", "validate", "respond"].map((s, i) => (
-                    <div key={s} className="flex items-center gap-3">
-                      <span className="text-white/30 w-4">{String(i + 1).padStart(2, "0")}</span>
-                      <span className="text-white/80 w-24">{s}</span>
-                      <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden">
-                        <div
-                          className="h-full bg-white/60"
-                          style={{ width: `${60 + i * 8}%` }}
-                        />
-                      </div>
-                      <span className="text-white/50">{280 + i * 96} ms</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <h4 className="text-white font-medium text-lg">Continuous Observability</h4>
+              <p className="text-white/40 text-sm max-w-sm">
+                Every trace, reasoning step, and tool invocation is recorded and auditable in real-time.
+              </p>
             </div>
           </motion.div>
         </div>

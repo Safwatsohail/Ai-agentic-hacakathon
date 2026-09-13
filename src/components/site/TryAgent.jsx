@@ -7,14 +7,12 @@ import { EXECUTION_STAGES, SUGGESTED_TASKS } from "@/data/mock";
 import { cn } from "@/lib/utils";
 
 const STAGE_TO_NODE = {
-  understand: "understand",
+  discord: "understand",
+  github_search: "data",
   plan: "plan",
-  reason: "reason",
-  search: "search",
-  tools: "data",
-  memory: "data",
-  validate: "validate",
-  respond: "respond",
+  github_pr: "reason",
+  calendar: "validate",
+  discord_report: "respond",
 };
 
 export default function TryAgent() {
@@ -70,7 +68,7 @@ export default function TryAgent() {
       setNodeStates((prev) => ({ ...prev, [nodeId]: "success" }));
     }
     setNodeStates((prev) => ({ ...prev, respond: "success" }));
-    setLogs((l) => [...l, { t: now(), label: "response synthesized · 6 sources cited" }]);
+    setLogs((l) => [...l, { t: now(), label: "Action verified. DISCORD → GITHUB → DISCORD → CALENDAR → 4/4 VERIFIED" }]);
     setDone(true);
     setRunning(false);
     toast.success("Agent completed the task.");
@@ -140,9 +138,9 @@ export default function TryAgent() {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-12 gap-0">
-            {/* Left: input + logs */}
-            <div className="lg:col-span-5 xl:col-span-4 border-b lg:border-b-0 lg:border-r border-white/[0.06] p-5 md:p-6">
+          <div className="grid lg:grid-cols-2 gap-0">
+            {/* Left: input */}
+            <div className="border-b lg:border-b-0 lg:border-r border-white/[0.06] p-5 md:p-8 flex flex-col justify-center">
               <label className="font-mono text-[10px] tracking-widest uppercase text-white/40">
                 Prompt
               </label>
@@ -195,34 +193,32 @@ export default function TryAgent() {
                 )}
               </div>
 
-              {/* Live log */}
-              <div className="mt-6">
-                <div className="flex items-center justify-between mb-2">
+              {/* Minimal Live log */}
+              <div className="mt-8 pt-6 border-t border-white/[0.06]">
+                <div className="flex items-center justify-between mb-3">
                   <span className="font-mono text-[10px] tracking-widest uppercase text-white/40">
-                    Live activity
+                    Live SSE Log
                   </span>
-                  <span className="font-mono text-[10px] text-white/30">{logs.length} events</span>
                 </div>
-                <div
-                  className="h-[220px] overflow-y-auto rounded-lg border border-white/[0.06] bg-black/40 p-3 space-y-1.5"
-                  data-testid="try-log"
-                >
+                <div className="h-[120px] overflow-y-auto space-y-1.5 pr-2" data-testid="try-log">
                   {logs.length === 0 && (
                     <div className="text-[12px] text-white/25 font-mono">
-                      // no events yet
+                      // waiting for agent...
                     </div>
                   )}
                   <AnimatePresence initial={false}>
                     {logs.map((l, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="flex items-start gap-3 font-mono text-[11.5px] leading-relaxed"
+                        initial={{ opacity: 0, x: -4 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={cn(
+                          "flex items-start gap-3 font-mono text-[11px] leading-relaxed",
+                          i === logs.length - 1 && done ? "text-emerald-400" : "text-white/70"
+                        )}
                       >
-                        <span className="text-white/35 shrink-0">{l.t}</span>
-                        <span className="text-white/80">{l.label}</span>
+                        <span className="opacity-40 shrink-0">{l.t}</span>
+                        <span>{l.label}</span>
                       </motion.div>
                     ))}
                   </AnimatePresence>
@@ -232,11 +228,11 @@ export default function TryAgent() {
             </div>
 
             {/* Right: graph */}
-            <div className="lg:col-span-7 xl:col-span-8 p-5 md:p-6 flex flex-col gap-4">
-              <AgentGraph variant="full" states={nodeStates} className="!aspect-[16/12]" />
-
-              {/* Stage strip */}
-              <div className="grid grid-cols-4 md:grid-cols-8 gap-1.5">
+            <div className="p-5 md:p-8 flex flex-col justify-center bg-black/20">
+              <AgentGraph variant="full" states={nodeStates} className="w-full max-w-md mx-auto mb-8" />
+              
+              {/* Minimal Stage Strip */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {EXECUTION_STAGES.map((s, i) => {
                   const active = i === stageIdx;
                   const past = i < stageIdx || (done && i <= stageIdx);
@@ -244,23 +240,17 @@ export default function TryAgent() {
                     <div
                       key={s.id}
                       className={cn(
-                        "px-2 py-2 rounded-md border text-[10px] font-mono tracking-widest uppercase transition-all",
-                        active && "border-white/40 bg-white/[0.05] text-white",
-                        past && "border-emerald-400/30 bg-emerald-400/[0.04] text-white/70",
-                        !active && !past && "border-white/[0.06] text-white/30",
+                        "px-3 py-2.5 rounded-lg border text-[10px] font-mono tracking-widest uppercase transition-all flex flex-col justify-center",
+                        active && "border-white/40 bg-white/[0.03] text-white",
+                        past && "border-emerald-500/20 bg-emerald-500/[0.02] text-emerald-400",
+                        !active && !past && "border-white/[0.06] text-white/30"
                       )}
-                      data-testid={`try-stage-${s.id}`}
                     >
-                      <div className="flex items-center gap-1.5">
-                        {past ? (
-                          <Check className="h-3 w-3 text-emerald-400" />
-                        ) : active ? (
-                          <Play className="h-3 w-3" />
-                        ) : (
-                          <span className="h-1 w-1 rounded-full bg-white/25" />
-                        )}
+                      <div className="flex items-center gap-2 mb-1">
+                        {past ? <Check className="h-3 w-3" /> : active ? <Play className="h-3 w-3" /> : <span className="h-1.5 w-1.5 rounded-full bg-white/20" />}
                         <span className="truncate">{s.label}</span>
                       </div>
+                      {active && <span className="text-[9px] text-white/50 lowercase">{s.detail}</span>}
                     </div>
                   );
                 })}
