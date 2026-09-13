@@ -13,8 +13,10 @@ def utc_now() -> datetime:
 
 class IssueStatus(str, Enum):
     OPEN = "open"
+    CONSENT_PENDING = "consent_pending"
     RESPONDED = "responded"
     RESOLVED = "resolved"
+    DECLINED = "declined"
 
 
 class MessageCreate(BaseModel):

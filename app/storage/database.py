@@ -78,7 +78,12 @@ class CsvStore:
 
     def find_open_issue(self, user_id: str, channel_id: str) -> IssueRecord | None:
         self.initialize()
-        matches = [IssueRecord.model_validate(row) for row in self._read(self.issues_path) if row["user_id"] == user_id and row["channel_id"] == channel_id and row["status"] in {IssueStatus.OPEN.value, IssueStatus.RESPONDED.value}]
+        matches = [IssueRecord.model_validate(row) for row in self._read(self.issues_path) if row["user_id"] == user_id and row["channel_id"] == channel_id and row["status"] in {IssueStatus.OPEN.value, IssueStatus.CONSENT_PENDING.value, IssueStatus.RESPONDED.value}]
+        return max(matches, key=lambda item: item.created_at) if matches else None
+
+    def find_pending_consent_issue(self, user_id: str, channel_id: str) -> IssueRecord | None:
+        self.initialize()
+        matches = [IssueRecord.model_validate(row) for row in self._read(self.issues_path) if row["user_id"] == user_id and row["channel_id"] == channel_id and row["status"] == IssueStatus.CONSENT_PENDING.value]
         return max(matches, key=lambda item: item.created_at) if matches else None
 
     def update_issue_status(self, issue_id: str, status: IssueStatus) -> IssueRecord | None:

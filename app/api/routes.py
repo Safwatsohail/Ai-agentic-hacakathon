@@ -20,6 +20,7 @@ validator = ResponseValidator()
 
 class ResponseRequest(BaseModel):
     issue_id: str
+    personalization_consent: bool = False
 
 
 @router.get("/health")
@@ -40,6 +41,13 @@ def respond(request: ResponseRequest) -> dict[str, object]:
     issue = store.get_issue(request.issue_id)
     if issue is None:
         raise HTTPException(status_code=404, detail="Issue not found")
+    if not request.personalization_consent:
+        store.update_issue_status(issue.issue_id, IssueStatus.CONSENT_PENDING)
+        return {
+            "issue_id": issue.issue_id,
+            "status": IssueStatus.CONSENT_PENDING,
+            "message": "Personalization consent is required before generating a reply.",
+        }
     profile = profiles.get_or_refresh(issue.user_id)
     response = agent.generate(retriever.retrieve(issue), profile)
     checked = validator.validate(response, issue.summary)

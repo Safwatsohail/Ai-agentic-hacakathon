@@ -24,4 +24,4 @@ Enable the Message Content Intent for the bot in the Discord developer portal. T
 
 ## API flow
 
-`POST /messages` stores every message. Ordinary messages stop there. Messages with issue indicators create an issue, and `POST /issues/respond` retrieves bounded context, builds an observable-only profile, generates a response, validates it, and returns it for delivery.
+`POST /messages` stores every message. Ordinary messages stop there. Messages with issue indicators create an issue. Before a personalized reply is generated, explicit consent is required: in Discord the bot asks the user to reply `yes` or `no`; in the API, send `personalization_consent: true` to `POST /issues/respond`. With consent, the agent uses only observable preferences derived from stored messages (such as concise versus detailed wording and a preference for steps). It does not impersonate the user or infer sensitive traits.

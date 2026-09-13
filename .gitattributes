@@ -1,5 +1,5 @@
-# Keep repository text files consistent across Windows, macOS, and Linux.
-* text=auto eol=lf
+# Keep repository text files consistent with this Windows/GitHub Desktop project.
+* text=auto eol=crlf
 
 # Do not apply text conversion to binary assets.
 *.png binary

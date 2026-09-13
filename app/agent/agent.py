@@ -22,6 +22,8 @@ class ResponseAgent:
         issue = context.issue.summary.strip()
         style = profile.style.verbosity
         opener = "I can help with that."
+        if profile.style.formality == "casual":
+            opener = "Got it — I can help with that."
         if context.issue.category == "authentication":
             guidance = "Please confirm the exact sign-in error, then verify the account credentials and any configured authentication environment variables."
         elif context.issue.category == "deployment":
@@ -32,6 +34,9 @@ class ResponseAgent:
             guidance = "Please confirm the source and target branches, then share the exact GitHub or CI error. Also check whether the branch is behind the target branch or blocked by required checks."
         else:
             guidance = "Please share the exact error message and the last action that worked, with any secrets removed."
+        prefers_steps = any("actionable steps" in preference.lower() for preference in profile.preferences)
+        if prefers_steps:
+            guidance = f"Here are the next steps:\n1. {guidance}\n2. Reply with the result, with any secrets removed."
         if style == "detailed":
             return f"{opener} I understand the issue as: {issue}\n\n{guidance}\n\nOnce you share that, I can suggest the next diagnostic step."
         return f"{opener} I understand the issue as: {issue[:220]}\n\n{guidance}"

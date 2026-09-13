@@ -9,4 +9,7 @@ def build_agent_input(context: ContextBundle, profile: UserCommunicationProfile)
         "relevant_history": [message.content for message in context.relevant_history[-4:]],
         "response_preferences": profile.preferences,
         "verbosity": profile.style.verbosity,
+        "formality": profile.style.formality,
+        "observed_patterns": profile.observed_patterns,
+        "profile_confidence": profile.confidence,
     }
