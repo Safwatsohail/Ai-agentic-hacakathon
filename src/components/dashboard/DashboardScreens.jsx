@@ -93,38 +93,66 @@ function RunsDetail({ run, onClose }) {
   const logEnd = useRef(null);
 
   useEffect(() => {
-    // Try to connect to real SSE endpoint
-    const evtSource = new EventSource(`/api/incidents/${run.id}/stream`);
-    
-    evtSource.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        if (payload.event === "step_update") {
-          setLogs(prev => [...prev, {
-            time: new Date().toLocaleTimeString(),
-            step: payload.data.step,
-            message: payload.data.message,
-            status: payload.data.status
-          }]);
-        }
-      } catch (e) {
-        console.error("Failed to parse SSE", e);
-      }
-    };
+    let evtSource;
+    let isMounted = true;
 
-    evtSource.onerror = () => {
-      // If error or disconnected, just simulate one line if empty to show the UI
-      if (logs.length === 0) {
-        setLogs([
-          { time: new Date().toLocaleTimeString(), step: "system", message: "Connecting to stream...", status: "pending" },
-          { time: new Date().toLocaleTimeString(), step: "discord_read", message: "Investigating commits...", status: "in_progress" }
-        ]);
-      }
-      evtSource.close();
-    };
+    fetch(`/api/incidents/${run.id}`)
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch incident details");
+        return res.json();
+      })
+      .then(data => {
+        if (!isMounted) return;
+        
+        // Populate historical logs if they exist
+        if (data.ledger && Array.isArray(data.ledger)) {
+          setLogs(data.ledger);
+        }
+
+        // Connect to real SSE endpoint for live updates
+        evtSource = new EventSource(`/api/incidents/${run.id}/stream`);
+        
+        evtSource.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (payload.event === "step_update") {
+              setLogs(prev => [...prev, {
+                time: new Date().toLocaleTimeString(),
+                step: payload.data.step,
+                message: payload.data.message,
+                status: payload.data.status
+              }]);
+            }
+          } catch (e) {
+            console.error("Failed to parse SSE", e);
+          }
+        };
+
+        evtSource.onerror = () => {
+          if (isMounted) {
+            setLogs(prev => prev.length === 0 ? [
+              { time: new Date().toLocaleTimeString(), step: "system", message: "Connecting to stream...", status: "pending" },
+              { time: new Date().toLocaleTimeString(), step: "discord_read", message: "Investigating commits...", status: "in_progress" }
+            ] : prev);
+          }
+          evtSource.close();
+        };
+      })
+      .catch(err => {
+        console.error("Error setting up run details:", err);
+        // Fallback for UI if backend is completely down
+        if (isMounted) {
+          setLogs([
+            { time: new Date().toLocaleTimeString(), step: "system", message: "Backend offline. Mocking stream...", status: "pending" },
+          ]);
+        }
+      });
 
     return () => {
-      evtSource.close();
+      isMounted = false;
+      if (evtSource) {
+        evtSource.close();
+      }
     };
   }, [run.id]);
 
