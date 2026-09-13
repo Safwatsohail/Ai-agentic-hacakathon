@@ -1,6 +1,6 @@
 // Central mock data for the platform. Frontend-only, no backend.
 
-export const AGENT_NAME = "Vernex";
+export const AGENT_NAME = "Orchestr";
 
 export const NAV_ITEMS = [
   { label: "Product", href: "#product" },

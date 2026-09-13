@@ -206,4 +206,25 @@ orchestr/
 
 **Orchestr** • *Verified AI orchestration across your tools.*
 
+---
+
+## 🗂 Repository Structure & Quickstart
+
+```
+backend/   FastAPI backend (Discord bot + REST/SSE API) — main.py, db.py, Dockerfile
+sandbox/   Google ADK agent (agent.py + github/calendar tools) — Dockerfile
+deploy/    docker-compose.yml + .env.example + run instructions
+docs/      API_SPEC.md, UPDATED_DOC.md, plan.md
+src/       React dashboard (landing + live execution ledger)
+```
+
+**Run everything locally:**
+1. `cp deploy/.env.example .env` and fill in tokens (Discord, Gemini, GitHub) + a Google service-account key as `google_credentials.json`.
+2. `docker compose -f deploy/docker-compose.yml up -d --build` → stack on :8000 (includes Caddy HTTPS proxy).
+3. `npm install && npm start` → dashboard on :3000 (proxies `/api/*` to the backend).
+
+**Production:** live at **https://orchestr.mhd64.dev** — Caddy reverse proxy serves the built app + `/api/*` on one origin (Let's Encrypt / AAAA + A DNS records listed in `deploy/README.md`).
+
+Full instructions, including how to trigger a demo incident, are in [`deploy/README.md`](deploy/README.md).
+
 </div>

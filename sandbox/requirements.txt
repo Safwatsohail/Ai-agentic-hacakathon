@@ -1,0 +1,4 @@
+google-adk==2.9.0
+requests==2.32.4
+google-api-python-client==2.145.0
+google-auth[pyopenssl]==2.58.0

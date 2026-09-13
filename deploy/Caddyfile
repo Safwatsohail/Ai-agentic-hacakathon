@@ -1,0 +1,18 @@
+# Orchestr frontend (SPA) + API behind one origin
+orchestr.mhd64.dev {
+	encode gzip
+
+	# API + real-time SSE -> FastAPI backend on the compose network
+	handle /api/* {
+		reverse_proxy backend:8000 {
+			flush_interval -1
+		}
+	}
+
+	# React production build (client-side routing: unknown paths -> index.html)
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

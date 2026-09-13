@@ -37,7 +37,7 @@ export default function Nav() {
           className="flex items-center gap-2.5 group"
         >
           <div className="h-8 w-8 rounded-md grid place-items-center bg-transparent overflow-hidden">
-            <img src="/logo.png" alt="Vernex Logo" className="h-full w-full object-contain" onError={(e) => e.target.style.display='none'} />
+            <img src="/logo.png" alt="Orchestr Logo" className="h-full w-full object-contain" onError={(e) => e.target.style.display='none'} />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-[15px] tracking-[-0.01em] font-medium text-white">

@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@/api";
 import { RunsScreen, IntegrationsScreen } from "@/components/dashboard/DashboardScreens";
 
 const SIDEBAR = [
@@ -22,32 +23,33 @@ const SIDEBAR = [
 
 export default function Dashboard() {
   const { section = "overview" } = useParams();
-  const [metrics, setMetrics] = useState(null);
+  const [incidents, setIncidents] = useState([]);
+  const [latency, setLatency] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/metrics')
+    const t0 = performance.now();
+    api("/api/incidents")
       .then(res => {
-        if (!res.ok) throw new Error("Failed to fetch metrics");
+        if (!res.ok) throw new Error("Failed to fetch incidents");
         return res.json();
       })
-      .then(data => {
-        setMetrics(data);
+      .then(list => {
+        setLatency(Math.round(performance.now() - t0));
+        setIncidents(list);
         setLoading(false);
       })
       .catch(err => {
         console.error("Backend not ready:", err);
-        setMetrics({
-          status: "Disconnected",
-          latency: 0,
-          successRate: 0,
-          tasks: 0,
-          apps: 0,
-          runs: 0,
-        });
+        setIncidents([]);
+        setLatency(0);
         setLoading(false);
       });
   }, []);
+
+  const verifiedCount = incidents.filter(i => i.status === "verified").length;
+  const openCount = incidents.filter(i => i.status === "investigating").length;
+  const percentVerified = incidents.length ? Math.round((verifiedCount / incidents.length) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-[#050506] text-white flex" data-testid="dashboard-page">
@@ -55,9 +57,9 @@ export default function Dashboard() {
       <aside className="hidden md:flex w-[240px] shrink-0 border-r border-white/[0.06] bg-[#07070a] flex-col">
         <Link to="/" className="flex items-center gap-2 px-5 h-16 border-b border-white/[0.06] group">
           <div className="h-7 w-7 rounded-md grid place-items-center overflow-hidden bg-transparent transition-all">
-            <img src="/logo.png" alt="Vernex" className="h-full w-full object-contain" onError={(e) => e.target.style.display='none'} />
+            <img src="/logo.png" alt="Orchestr" className="h-full w-full object-contain" onError={(e) => e.target.style.display='none'} />
           </div>
-          <span className="text-white font-medium tracking-tight">Vernex</span>
+          <span className="text-white font-medium tracking-tight">Orchestr</span>
           <span className="ml-auto font-mono text-[10px] text-white/40">v1.0.0</span>
         </Link>
 
@@ -125,12 +127,12 @@ export default function Dashboard() {
                 <div className="flex h-64 items-center justify-center text-white/50"><Loader2 className="h-6 w-6 animate-spin" /></div>
               ) : (
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-                  <KPI label="System Status" value={metrics.status} tone="live" testid="kpi-status" />
-                  <KPI label="Average Latency" value={metrics.latency} suffix=" ms" mono testid="kpi-latency" />
-                  <KPI label="Task Success" value={metrics.successRate} suffix="%" mono testid="kpi-success" />
-                  <KPI label="Total Tasks" value={metrics.tasks} mono testid="kpi-tasks" />
-                  <KPI label="Connected Apps" value={metrics.apps} mono testid="kpi-apps" />
-                  <KPI label="Active Runs" value={metrics.runs} mono tone="live" testid="kpi-runs" />
+                  <KPI label="API Status" value={incidents.length ? "Online" : "No data"} tone="live" testid="kpi-status" />
+                  <KPI label="API Latency" value={latency} suffix=" ms" mono testid="kpi-latency" />
+                  <KPI label="Incidents" value={incidents.length} mono testid="kpi-tasks" />
+                  <KPI label="Verified" value={`${percentVerified}%`} mono testid="kpi-success" />
+                  <KPI label="Connected Apps" value={incidents.length ? 3 : 0} mono testid="kpi-apps" />
+                  <KPI label="Open Incidents" value={openCount} mono tone="live" testid="kpi-runs" />
                 </div>
               )}
             </>
