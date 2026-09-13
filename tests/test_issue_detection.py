@@ -9,3 +9,8 @@ def test_detects_actionable_issue():
 
 def test_ignores_normal_message():
     assert IssueDetector().detect("hey there").is_issue is False
+
+
+def test_categorizes_pull_request_issue():
+    result = IssueDetector().detect("My pull request is blocked and will not merge")
+    assert result.category == "pull_request"

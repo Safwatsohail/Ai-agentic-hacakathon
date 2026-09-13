@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import logging
 
 import certifi
 from dotenv import load_dotenv
@@ -8,6 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 # Use the virtual environment's maintained CA bundle for Discord HTTPS requests.
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+
+logger = logging.getLogger(__name__)
 
 
 def create_bot():
@@ -41,6 +44,8 @@ def create_bot():
             profile = ProfileUpdater(store).get_or_refresh(issue.user_id)
             response = ResponseAgent().generate(ContextRetriever(store).retrieve(issue), profile)
             checked = ResponseValidator().validate(response, issue.summary)
+            if not checked.valid:
+                logger.warning("Response validation failed for issue %s: %s", issue.issue_id, "; ".join(checked.reasons))
             await message.reply(checked.cleaned_response if checked.valid else ResponseValidator.fallback(), mention_author=False)
         await bot.process_commands(message)
     return bot

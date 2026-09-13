@@ -28,8 +28,10 @@ class ResponseAgent:
             guidance = "Please share the failing build or deployment log line and confirm which environment you are deploying to."
         elif context.issue.category == "configuration":
             guidance = "Please check the relevant configuration values and share the exact error message, with secrets removed."
+        elif context.issue.category == "pull_request":
+            guidance = "Please confirm the source and target branches, then share the exact GitHub or CI error. Also check whether the branch is behind the target branch or blocked by required checks."
         else:
             guidance = "Please share the exact error message and the last action that worked, with any secrets removed."
         if style == "detailed":
             return f"{opener} I understand the issue as: {issue}\n\n{guidance}\n\nOnce you share that, I can suggest the next diagnostic step."
-        return f"{opener} {guidance}"
+        return f"{opener} I understand the issue as: {issue[:220]}\n\n{guidance}"
