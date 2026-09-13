@@ -35,3 +35,7 @@ yarn-error.log*
 
 # agent IDE artifacts
 .emergent/
+
+# test artifacts
+*.db
+*.db-journal

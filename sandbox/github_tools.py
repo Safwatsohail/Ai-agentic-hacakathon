@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import shlex
@@ -51,6 +52,89 @@ def read_commit_diff(sha: str) -> str:
 def _run_tests(repo_dir, test_path):
     """Runs a Python test file inside the repo and returns the CompletedProcess."""
     return _run(f"python3 {shlex.quote(test_path)}", cwd=repo_dir)
+
+
+def list_open_issues(limit: int = 50) -> str:
+    """Returns open issues in the target repo as a JSON array (number, title, author, labels, body, timestamps)."""
+    cmd = (
+        f"gh issue list --repo {REPO_NAME} --state open --limit {limit} "
+        "--json number,title,author,labels,createdAt,updatedAt,body"
+    )
+    result = _run(cmd)
+    result.check_returncode()
+    return result.stdout.strip()
+
+
+def get_issue(number: int) -> str:
+    """Returns one issue (with labels, body and comments) as JSON."""
+    cmd = (
+        f"gh issue view {number} --repo {REPO_NAME} --json "
+        "number,title,author,labels,body,createdAt,updatedAt,comments"
+    )
+    result = _run(cmd)
+    result.check_returncode()
+    return result.stdout.strip()
+
+
+def post_issue_comment(number: int, body: str) -> str:
+    """Posts a comment on the issue using a --body-file (safe quoting)."""
+    workdir = tempfile.mkdtemp(prefix="orchestr_issue_")
+    try:
+        body_file = os.path.join(workdir, "issue_comment.md")
+        with open(body_file, "w") as f:
+            f.write(body)
+        result = _run(
+            f"gh issue comment {number} --repo {REPO_NAME} "
+            f"--body-file {shlex.quote(body_file)}"
+        )
+        result.check_returncode()
+        return result.stdout.strip()
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+
+
+def add_issue_labels(number: int, labels: list[str]) -> str:
+    """Adds the given labels to an issue (no-op when there are none)."""
+    if not labels:
+        return ""
+    result = _run(
+        f"gh issue edit {number} --repo {REPO_NAME} "
+        f"--add-label {shlex.quote(','.join(labels))}"
+    )
+    result.check_returncode()
+    return result.stdout.strip()
+
+
+def list_user_issue_texts(author: str) -> str:
+    """Returns a JSON list of public text samples authored by a GitHub user in
+    the target repo: issue titles/bodies and issue comment bodies. Used to
+    derive an observable communication profile for adapted replies."""
+    samples: list[dict] = []
+    try:
+        result = _run(
+            f"gh search issues --repo {REPO_NAME} --author {shlex.quote(author)} "
+            "--json title,body --limit 25"
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            for item in json.loads(result.stdout):
+                if item.get("title"):
+                    samples.append({"kind": "issue", "text": item["title"]})
+                if item.get("body"):
+                    samples.append({"kind": "issue", "text": item["body"]})
+    except Exception:
+        pass
+    try:
+        result = _run(
+            f"gh api repos/{REPO_NAME}/issues/comments?per_page=100 --paginate"
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            for comment in json.loads(result.stdout):
+                user = (comment.get("user") or {}).get("login", "")
+                if user == author and comment.get("body"):
+                    samples.append({"kind": "comment", "text": comment["body"]})
+    except Exception:
+        pass
+    return json.dumps(samples[:60])
 
 
 def create_fix_pr(

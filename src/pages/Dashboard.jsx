@@ -10,14 +10,16 @@ import {
   ArrowUpRight,
   Server,
   Loader2,
+  Bug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/api";
-import { RunsScreen, IntegrationsScreen } from "@/components/dashboard/DashboardScreens";
+import { RunsScreen, IntegrationsScreen, IssuesScreen } from "@/components/dashboard/DashboardScreens";
 
 const SIDEBAR = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
   { id: "runs", label: "Runs Log", icon: Activity },
+  { id: "issues", label: "Issues", icon: Bug },
   { id: "integrations", label: "Integrations", icon: Plug },
 ];
 
@@ -139,6 +141,7 @@ export default function Dashboard() {
           )}
 
           {section === "runs" && <RunsScreen />}
+          {section === "issues" && <IssuesScreen />}
           {section === "integrations" && <IntegrationsScreen />}
         </div>
       </div>

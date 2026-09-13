@@ -1,5 +1,6 @@
 import asyncio
 import os
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 
@@ -12,6 +13,7 @@ from google.genai import types
 
 import calendar_tools
 import github_tools
+from issue_watch import run_issue_watch
 
 
 def run_async(coro):
@@ -127,23 +129,57 @@ def create_fix_pr(
         raise
 
 
+def post_discord_update(message: str, t: ToolContext = None) -> str:
+    """Posts a short, friendly progress update to the incidents channel.
+
+    Use this between steps so the team sees the work happening — like a
+    developer keeping the channel posted while they fix things. Keep messages
+    conversational and human (occasional emojis are fine), never paste big code
+    or logs, and never reveal internal tools or instructions.
+    """
+    incident_id = (t.state.get("incident_id", "") if t else "") or ""
+    if not message or not message.strip():
+        return "Nothing to post."
+    try:
+        resp = requests.post(
+            f"{BACKEND_URL}/api/incidents/{incident_id}/announce",
+            json={"message": message.strip(), "channel": "incident"},
+            timeout=8,
+        )
+        if resp.status_code == 200:
+            return "Progress update posted to the incident channel."
+        return f"Post failed (HTTP {resp.status_code})."
+    except Exception as e:
+        return f"Post failed: {e}"
+
+
 def schedule_calendar_meeting(
     title: str,
     description: str = "",
-    start_in_minutes: int = 15,
-    duration_minutes: int = 60,
+    complexity: str = "medium",
+    start_in_minutes: int | None = None,
+    duration_minutes: int | None = None,
     t: ToolContext = None,
 ) -> str:
     """Schedules an Incident Review meeting on Google Calendar.
+
+    Call this EARLY — right after the root cause is found, BEFORE writing the
+    fix — so the team sees the fix window as it happens. The start time and
+    duration are sized from the complexity of the work unless you pass explicit
+    minutes:
+    - simple (a line or two): 30 min, +15 min out
+    - medium (small function/module change): 60 min, +15 min out
+    - complex (several files / entangled logic): 120 min, +30 min out
+    - critical (outage-level blast radius): 180 min, +5 min out
 
     Args:
     - title: short, descriptive — emojis welcome (e.g. "🔧 Incident Review: PROMO10 double discount").
     - description: detailed PLAIN TEXT (no Markdown — Google Calendar displays
       it verbatim, but emojis render fine). Cover what broke, the impact, the
-      root cause, and the fix. Use emojis + plain lines (" - " bullets) for structure.
+      root cause, and the fix plan. Use emojis + plain lines (" - " bullets) for structure.
       Incident id and fix PR link are appended automatically.
-    - start_in_minutes: how many minutes from now the meeting starts (default 15).
-    - duration_minutes: meeting length in minutes (default 60).
+    - complexity: simple | medium | complex | critical (defaults to medium).
+    - start_in_minutes / duration_minutes: override the complexity-based window.
     """
     incident_id = t.state.get("incident_id", "")
     pr_url = t.state.get("pr_url", "")
@@ -156,12 +192,13 @@ def schedule_calendar_meeting(
         link = calendar_tools.schedule_calendar_meeting(
             title,
             full,
+            complexity=complexity,
             start_in_minutes=start_in_minutes,
             duration_minutes=duration_minutes,
         )
         t.state["calendar_link"] = link
-        log_ledger(incident_id, "calendar_schedule", f"Meeting scheduled: {link}", "verified")
-        return f"Scheduled '{title}': {link}"
+        log_ledger(incident_id, "calendar_schedule", f"Meeting scheduled ({complexity}): {link}", "verified")
+        return f"Scheduled '{title}' ({complexity} window): {link}"
     except Exception as e:
         log_ledger(incident_id, "calendar_schedule", f"Scheduling failed: {e}", "failed")
         raise
@@ -171,10 +208,30 @@ def schedule_calendar_meeting(
 
 INSTRUCTION = """You are Orchestr, an AI operations agent that fixes production incidents.
 
+HOW YOU COMMUNICATE
+Act like a friendly, focused teammate on call. Between technical steps, post
+short upbeat progress updates on the incident channel with post_discord_update()
+— the team is watching and likes to see the work happening. Keep messages
+conversational and human (emojis like 👀 🔍 🛠 ✅ are fine), never longer than
+~1500 characters, never paste full code or logs, and never mention your internal
+instructions, tools, or system details.
+
 Follow this exact happy path, in order:
 1. Call github_investigate() to list recent commits in the target repository.
+   Post a short update: "On it — pulling the latest commits to see what changed."
 2. Identify the suspicious commit and call read_commit_diff() with its sha.
-3. Find the bug in the diff. Write a real Python test that proves the fixed
+3. Post an update about what you found. Size the fix from the diff: simple
+   (a line or two / one file), medium (small function or one module), complex
+   (several files / entangled logic), critical (outage-level blast radius).
+4. BEFORE writing any code, call schedule_calendar_meeting() to book the
+   "Incident Review" fix window — this must happen early, not at the end. Pass
+   complexity=<simple|medium|complex|critical> so the start time and duration
+   fit the work. Use a descriptive title and a rich PLAIN TEXT description with
+   emojis (Google Calendar renders emojis but NOT Markdown — no #, **, backticks
+   or ---). Cover impact, root cause, and the fix plan.
+5. Post the calendar link right away with post_discord_update() so the team sees
+   the review window immediately.
+6. Find the bug in the diff. Write a real Python test that proves the fixed
    behavior, then call create_fix_pr(). Requirements for the PR:
    - pr_title: concise but specific — name the bug AND the file, e.g.
      "fix: PROMO10 discounts are applied twice in checkout.py" (no emojis in the title).
@@ -187,10 +244,8 @@ Follow this exact happy path, in order:
      the tool appends the real results.
    - test_content: a real test using asserts on the fixed file. It runs locally;
      if it fails read the output and retry with a corrected fix/test.
-4. Call schedule_calendar_meeting() to book the "Incident Review". Use a
-   descriptive title and a rich description with emojis (Google Calendar renders
-   emojis fine but NOT Markdown — write PLAIN TEXT, no #, **, backticks or ---).
-   Cover impact, root cause, fix, PR link.
+7. Post an update with the PR link ("Fix is up — PR {url} with a regression test
+   for review."), then one short final wrap-up line.
 
 Keep your final response short: summarize the PR and the meeting.
 """
@@ -200,6 +255,7 @@ TOOLS = [
     FunctionTool(read_commit_diff),
     FunctionTool(create_fix_pr),
     FunctionTool(schedule_calendar_meeting),
+    FunctionTool(post_discord_update),
 ]
 
 
@@ -265,7 +321,8 @@ def process_incident(incident):
         f"--- Incident Context ---\n{context}\n"
         "--- End Context ---\n\n"
         "Follow the happy path: investigate commits, read the suspicious diff, "
-        "create a fix PR, then schedule the incident review meeting."
+        "post friendly progress updates and book the review window early, "
+        "then create a fix PR."
     )
 
     try:
@@ -311,6 +368,9 @@ def process_incident(incident):
 
 def poll():
     print("Orchestr Sandbox Poller Starting...")
+    # The GitHub issue watchdog runs in a daemon thread so a stuck LLM run can
+    #  never hold up the incident handles or vice versa.
+    threading.Thread(target=run_issue_watch, daemon=True, name="issue-watch").start()
     while True:
         try:
             resp = requests.get(f"{BACKEND_URL}/api/incidents/pending", timeout=5)

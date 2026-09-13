@@ -64,19 +64,51 @@ def _to_plain_text(text: str) -> str:
     return text.strip()
 
 
+# Estimated fix windows per complexity level. Early booking (before the fix is
+# written) needs a start/duration decision that fits the size of the work.
+COMPLEXITY_WINDOWS = {
+    "simple": {"start_in_minutes": 15, "duration_minutes": 30},
+    "medium": {"start_in_minutes": 15, "duration_minutes": 60},
+    "complex": {"start_in_minutes": 30, "duration_minutes": 120},
+    "critical": {"start_in_minutes": 5, "duration_minutes": 180},
+}
+
+
+def resolve_fix_window(
+    complexity: str = "",
+    start_in_minutes=None,
+    duration_minutes=None,
+) -> tuple[int, int]:
+    """Maps a complexity label to (start_in_minutes, duration_minutes).
+
+    Explicit start/duration values win over the complexity-based defaults.
+    Unknown complexity falls back to a medium window.
+    """
+    window = COMPLEXITY_WINDOWS.get((complexity or "medium").strip().lower(), COMPLEXITY_WINDOWS["medium"])
+    start = int(start_in_minutes) if start_in_minutes is not None else window["start_in_minutes"]
+    duration = int(duration_minutes) if duration_minutes is not None else window["duration_minutes"]
+    return max(0, start), max(15, duration)
+
+
 def schedule_calendar_meeting(
     title: str,
     description: str = "",
-    start_in_minutes: int = 15,
-    duration_minutes: int = 60,
+    complexity: str = "medium",
+    start_in_minutes: int | None = None,
+    duration_minutes: int | None = None,
 ) -> str:
     """Creates an Incident Review event on the dedicated public calendar.
 
-    Returns the public Google Calendar htmlLink to the created event.
+    Sizes the fix window from the complexity of the work (simple / medium /
+    complex / critical) unless explicit start_in_minutes / duration_minutes are
+    given. Returns the public Google Calendar htmlLink to the created event.
     """
     service = _get_service()
     calendar_id = _get_or_create_calendar(service)
     ensure_public_calendar(calendar_id)
+    start_in_minutes, duration_minutes = resolve_fix_window(
+        complexity, start_in_minutes, duration_minutes
+    )
     start = datetime.now(timezone.utc) + timedelta(minutes=start_in_minutes)
     end = start + timedelta(minutes=duration_minutes)
 
