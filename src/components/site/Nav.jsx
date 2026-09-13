@@ -36,9 +36,8 @@ export default function Nav() {
           data-testid="nav-logo"
           className="flex items-center gap-2.5 group"
         >
-          <div className="relative h-7 w-7 rounded-md border border-white/10 bg-white/[0.03] grid place-items-center overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
-            <div className="relative h-2 w-2 rounded-[2px] bg-white/85" />
+          <div className="h-8 w-8 rounded-md grid place-items-center bg-transparent overflow-hidden">
+            <img src="/logo.png" alt="Vernex Logo" className="h-full w-full object-contain" onError={(e) => e.target.style.display='none'} />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-[15px] tracking-[-0.01em] font-medium text-white">

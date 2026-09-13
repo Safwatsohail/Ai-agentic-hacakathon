@@ -22,7 +22,7 @@ export default function Integrations() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: idx * 0.03 }}
-              className="group relative p-4 rounded-xl border border-white/[0.08] bg-[#0a0a0c] hover:border-white/25 hover:bg-[#0c0c0e] transition-all"
+              className="group relative p-6 rounded-xl border border-white/[0.08] bg-[#0a0a0c] hover:border-white/25 hover:bg-[#0c0c0e] transition-all"
               data-testid={`integration-${i.name.toLowerCase().replace(/\s+/g, "-")}`}
             >
               <div className="flex items-start justify-between">
