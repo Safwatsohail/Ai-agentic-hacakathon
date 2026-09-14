@@ -70,6 +70,9 @@ class WatchedIssue(Base):
     pr_url = Column(String, default="")
     reply = Column(Text, default="")
     incident_id = Column(String, default="")
+    # --- continuous-chat cursors (per-issue comment thread) ---
+    last_human_comment_id = Column(BigInteger, default=0)   # newest human comment we have replied to
+    our_last_comment_id = Column(BigInteger, default=0)     # newest comment of our own on this issue
     created_at = Column(DateTime(timezone=True), default=utcnow)
     updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 

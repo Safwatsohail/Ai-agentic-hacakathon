@@ -95,7 +95,11 @@ def list_issue_comments(number: int) -> str:
 
 
 def post_issue_comment(number: int, body: str) -> str:
-    """Posts a comment on the issue using a --body-file (safe quoting)."""
+    """Posts a comment on the issue using a --body-file (safe quoting).
+
+    Returns the created comment's numeric id (parsed from the GitHub URL so
+    the watchdog can advance its per-issue comment cursor and never answer
+    the same message twice)."""
     workdir = tempfile.mkdtemp(prefix="orchestr_issue_")
     try:
         body_file = os.path.join(workdir, "issue_comment.md")
@@ -106,7 +110,9 @@ def post_issue_comment(number: int, body: str) -> str:
             f"--body-file {shlex.quote(body_file)}"
         )
         result.check_returncode()
-        return result.stdout.strip()
+        text = result.stdout.strip()
+        match = re.search(r"/comments/(\d+)(?:[\s#]|$)", text)
+        return match.group(1) if match else text
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 
