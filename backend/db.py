@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, create_engine
+from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String, Text, create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 DATABASE_URL = os.environ.get(
@@ -101,6 +101,42 @@ class ScanState(Base):
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    _migrate_watched_issue_cursors()
+
+
+def _migrate_watched_issue_cursors():
+    """Add comment-cursor columns to an existing watched_issues table.
+
+    create_all only creates *missing tables*; tables created before the cursor
+    columns were introduced keep their old shape. We ALTER them idempotently so
+    multi-turn conversation state survives restarts without a data wipe.
+    """
+    inspector = inspect(engine)
+    tables = set(inspector.get_table_names())
+    if "watched_issues" not in tables and "watchedissue" not in tables:
+        return
+    table = "watched_issues" if "watched_issues" in tables else "watchedissue"
+    existing = {c["name"] for c in inspector.get_columns(table)}
+    if engine.dialect.name == "postgresql":
+        check = 'SELECT 1 FROM information_schema.columns WHERE table_name=:t AND column_name=:c'
+    else:
+        check = "SELECT 1 FROM pragma_table_info(:t) WHERE name=:c"
+    probes = [
+        ("last_human_comment_id", "id", "BIGINT"),
+        ("our_last_comment_id", "id", "BIGINT"),
+    ]
+    for col, refcol, coltype in probes:
+        try:
+            if col in existing:
+                continue
+            res = engine.execute(text(check).bindparams(t=table, c=col)).fetchone()
+            if res:
+                continue
+            engine.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {coltype}"))
+            engine.commit()
+        except Exception:
+            # Fresh create_all may already have the column; tolerate races.
+            pass
 
 
 def incident_to_dict(inc: Incident) -> dict:
@@ -146,6 +182,8 @@ def issue_to_dict(issue, incident=None) -> dict:
         "incident_status": incident.status if incident else "",
         "incident_pr_url": incident.pr_url if incident else "",
         "incident_calendar_link": incident.calendar_link if incident else "",
+        "last_human_comment_id": int(issue.last_human_comment_id or 0),
+        "our_last_comment_id": int(issue.our_last_comment_id or 0),
         "created_at": issue.created_at.isoformat() if issue.created_at else None,
         "updated_at": issue.updated_at.isoformat() if issue.updated_at else None,
     }

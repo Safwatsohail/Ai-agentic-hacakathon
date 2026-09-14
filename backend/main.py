@@ -278,6 +278,8 @@ class IssueResult(BaseModel):
     repo: Optional[str] = None
     labels: Optional[List[str]] = None
     body: Optional[str] = None
+    last_human_comment_id: Optional[int] = None
+    our_last_comment_id: Optional[int] = None
 
 
 @app.post("/api/issues/{number:int}/result")

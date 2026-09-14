@@ -289,6 +289,22 @@ def follow_up_promoted(processed):
 def scan():
     state = _api_get("/api/issues/scan-state")
     processed = set((state or {}).get("processed") or [])
+    processed = follow_up_promoted(processed)
+
+    # Per-issue comment cursors live in the backend (WatchedIssue row), so the
+    # watcher can carry on multi-turn conversations after every scan even after
+    # a restart. Default: nothing answered yet.
+    cursor_map = {}
+    try:
+        rows = _api_get("/api/issues")
+        for row in rows or []:
+            if row.get("issue_number") is not None:
+                cursor_map[row["issue_number"]] = {
+                    "last_human": int(row.get("last_human_comment_id") or 0),
+                    "our_last": int(row.get("our_last_comment_id") or 0),
+                }
+    except Exception as exc:
+        log(f"could not load cursor map from backend ({exc}); continuing with {len(cursor_map)} cursors")
 
     try:
         issues = json.loads(gt.list_open_issues())
@@ -301,6 +317,11 @@ def scan():
         number = issue.get("number")
         active.add(number)
         if number in processed:
+            # Already handed off to the pipeline: watch for follow-up human
+            # comments so the conversation can continue instead of stopping.
+            continued = _continue_issue_chat(number, cursor_map.get(number, {}))
+            if continued is not None:
+                processed.add(number)
             continue
         handled = handle_issue(issue)
         if handled:
@@ -313,6 +334,86 @@ def scan():
         {"repo": REPO_NAME, "last_scan_at": _now_iso(), "processed": sorted(processed)},
     )
     return processed
+
+
+def _continue_issue_chat(number: int, cursor: dict) -> bool | None:
+    """Multi-turn follow-up on an already-handled issue.
+
+    Lists the full comment thread; if a *human* posted something newer than the
+    cursor we last answered, adapts a conversational follow-up (kind
+    "followup") and posts it, then bumps the backend cursors so the next scan
+    knows where we are. Returns True when we replied, False when there is
+    nothing new, None when the thread could not be read.
+    """
+    try:
+        thread = json.loads(gt.list_issue_comments(number))
+    except Exception as exc:
+        log(f"issue #{number}: comment thread unreadable ({exc})")
+        return None
+
+    our_login = os.environ.get("GITHUB_USERNAME", "")
+    last_human = int(cursor.get("last_human") or 0)
+    our_last = int(cursor.get("our_last") or 0)
+
+    # Newest human comment we haven't answered yet.
+    newest_human_id = 0
+    newest_human_author = ""
+    newest_human_body = ""
+    for comment in thread:
+        cid = int(comment.get("id") or 0)
+        author = (comment.get("author") or {}).get("login", "")
+        if author and author != our_login and cid > last_human:
+            if cid > newest_human_id:
+                newest_human_id = cid
+                newest_human_author = author
+                newest_human_body = comment.get("body") or ""
+    if not newest_human_id:
+        return False
+
+    reply_text = _conversational_followup(number, newest_human_author, newest_human_body)
+    if not reply_text:
+        return False
+    reply_text = _validate_reply(reply_text)
+
+    try:
+        our_cid = int(gt.post_issue_comment(number, reply_text))
+    except Exception as exc:
+        log(f"issue #{number}: follow-up comment failed ({exc})")
+        return None
+
+    _api_post(
+        f"/issues/{number}/result",
+        {
+            "status": "in_progress",
+            "last_human_comment_id": newest_human_id,
+            "our_last_comment_id": max(our_cid, our_last),
+        },
+    )
+    log(f"issue #{number}: answered newest human comment #{newest_human_id} (follow-up, our comment #{our_cid})")
+    return True
+
+
+def _conversational_followup(number: int, author_login: str, body: str) -> str:
+    """Profile-adapted, shorter conversational reply for a follow-up comment."""
+    profile = resolve_profile(author_login)
+    issue_summary = {"title": _issue_title(number)}
+    classification = {
+        "category": "question",
+        "severity": "info",
+        "labels": [],
+        "summary": "User asked a follow-up question on the thread.",
+    }
+    payload = {
+        "kind": "followup",
+        "author": author_login,
+        "body": body,
+        "profile": profile,
+    }
+    try:
+        return adapt(profile, issue_summary, classification, payload)
+    except Exception as exc:
+        log(f"follow-up adapt failed ({exc}); using fallback")
+        return f"Thanks for the follow-up! Could you share a bit more detail so I can keep helping?"
 
 
 def run_issue_watch():
