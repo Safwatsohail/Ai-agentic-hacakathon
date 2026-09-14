@@ -244,7 +244,7 @@ Follow this exact happy path, in order:
      the tool appends the real results.
    - test_content: a real test using asserts on the fixed file. It runs locally;
      if it fails read the output and retry with a corrected fix/test.
-7. Post an update with the PR link ("Fix is up — PR {url} with a regression test
+7. Post an update with the PR link ("Fix is up — PR <link> with a regression test
    for review."), then one short final wrap-up line.
 
 Keep your final response short: summarize the PR and the meeting.

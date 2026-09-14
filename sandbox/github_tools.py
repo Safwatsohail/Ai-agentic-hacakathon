@@ -76,6 +76,24 @@ def get_issue(number: int) -> str:
     return result.stdout.strip()
 
 
+def list_issue_comments(number: int) -> str:
+    """Returns the full comment thread of an issue as JSON
+    [{id, author:{login}, body, createdAt}, ...] (oldest first).
+
+    Used by the watchdog to keep the conversation going: it finds the newest
+    human comment that is newer than the last comment the bot already
+    answered, so follow-ups on any issue keep getting replies (not just the
+    first issue and not just the first reply).
+    """
+    result = _run(
+        f"gh api repos/{REPO_NAME}/issues/{number}/comments "
+        "--jq 'sort_by(.id) | map({id, author: {login: .user.login}, "
+        "body, createdAt: .created_at}) | tojson'"
+    )
+    result.check_returncode()
+    return result.stdout.strip()
+
+
 def post_issue_comment(number: int, body: str) -> str:
     """Posts a comment on the issue using a --body-file (safe quoting)."""
     workdir = tempfile.mkdtemp(prefix="orchestr_issue_")
